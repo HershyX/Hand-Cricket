@@ -1,26 +1,39 @@
-export default function MoveReveal({ phase, batterMove, bowlerMove, result }) {
-  if (phase !== 'reveal' && phase !== 'settle') return null
+import { useEffect, useState } from 'react'
 
-  const isOut = phase === 'settle' && result?.type === 'out'
-  const runs = phase === 'settle' && result?.type === 'runs' ? result.runs : null
+export default function MoveReveal({ ball }) {
+  const [settled, setSettled] = useState(false)
+
+  useEffect(() => {
+    if (!ball) {
+      setSettled(false)
+      return undefined
+    }
+    const timer = window.setTimeout(() => setSettled(true), 900)
+    return () => window.clearTimeout(timer)
+  }, [ball])
+
+  if (!ball) return null
+
+  const isOut = ball.outcome === 'OUT'
+  const runs = ball.runs
 
   return (
     <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-6 backdrop-blur-sm">
       <div className="w-full max-w-sm rounded-3xl bg-slate-900 p-8 text-center ring-1 ring-white/15 shadow-2xl">
-        {phase === 'reveal' ? (
+        {!settled ? (
           <>
             <div className="grid grid-cols-2 gap-4">
               <div className="animate-pop rounded-2xl bg-emerald-500/15 p-5 ring-1 ring-emerald-400/30">
                 <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-300">
                   Batter
                 </p>
-                <p className="mt-1 font-mono text-5xl font-black text-emerald-300">{batterMove}</p>
+                <p className="mt-1 font-mono text-5xl font-black text-emerald-300">{ball.batter_move}</p>
               </div>
               <div className="animate-pop rounded-2xl bg-sky-500/15 p-5 ring-1 ring-sky-400/30 [animation-delay:0.3s]">
                 <p className="text-[11px] font-black uppercase tracking-[0.25em] text-sky-300">
                   Bowler
                 </p>
-                <p className="mt-1 font-mono text-5xl font-black text-sky-300">{bowlerMove}</p>
+                <p className="mt-1 font-mono text-5xl font-black text-sky-300">{ball.bowler_move}</p>
               </div>
             </div>
             <p className="mt-6 animate-rise text-sm font-bold uppercase tracking-[0.2em] text-slate-400 [animation-delay:0.55s]">

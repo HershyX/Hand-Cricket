@@ -1,6 +1,6 @@
-import Button from '../components/Button'
 import ScreenShell from '../components/ScreenShell'
-import { useGame, SCREENS } from '../state/GameContext'
+import { useGame } from '../state/GameContext'
+import { teamLabel } from '../lib/gameView'
 
 function BatIcon({ className = '' }) {
   return (
@@ -27,22 +27,30 @@ function BallIcon({ className = '' }) {
 }
 
 export default function TossDecision() {
-  const { makeDecision, navigate } = useGame()
+  const { tossWinnerId, me, tossDecision } = useGame()
+  const iWon = me && tossWinnerId === me.team_id
+
+  if (!iWon) {
+    return (
+      <ScreenShell title="Your call" subtitle="Waiting for the toss winner…">
+        <div className="flex flex-1 items-center justify-center">
+          <p className="animate-rise text-center text-sm font-bold text-slate-400">
+            Waiting for {tossWinnerId ? teamLabel(tossWinnerId) : 'the other team'} to choose bat or bowl.
+          </p>
+        </div>
+      </ScreenShell>
+    )
+  }
 
   return (
     <ScreenShell
       title="Your call"
       subtitle="You won the toss — bat or bowl first?"
-      actions={
-        <Button size="sm" variant="ghost" onClick={() => navigate(SCREENS.toss)}>
-          Back
-        </Button>
-      }
     >
       <div className="grid flex-1 grid-rows-2 gap-4">
         <button
           type="button"
-          onClick={() => makeDecision('bat')}
+          onClick={() => tossDecision('BATTING')}
           className="group flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-500/20 to-transparent ring-1 ring-white/15 transition hover:ring-emerald-400/50 active:scale-[0.98]"
         >
           <BatIcon className="transition-transform group-hover:scale-110" />
@@ -52,7 +60,7 @@ export default function TossDecision() {
 
         <button
           type="button"
-          onClick={() => makeDecision('bowl')}
+          onClick={() => tossDecision('BOWLING')}
           className="group flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-sky-500/20 to-transparent ring-1 ring-white/15 transition hover:ring-sky-400/50 active:scale-[0.98]"
         >
           <BallIcon className="transition-transform group-hover:scale-110" />

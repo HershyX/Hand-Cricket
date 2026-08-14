@@ -7,5 +7,16 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: ['.monkeycode-ai.live'],
+    proxy: {
+      '/health': 'http://localhost:8000',
+      '/rooms': 'http://localhost:8000',
+      '/ws': {
+        target: 'ws://localhost:8000',
+        ws: true,
+      },
+    },
+  },
+  test: {
+    environment: 'node',
   },
 })

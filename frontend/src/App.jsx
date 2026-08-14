@@ -35,10 +35,23 @@ function Router() {
   }
 }
 
+function ErrorToast() {
+  const { error } = useGame()
+  if (!error) return null
+  return (
+    <div className="fixed inset-x-0 top-4 z-[60] flex justify-center px-4">
+      <p className="max-w-sm rounded-2xl bg-rose-500/90 px-5 py-3 text-center text-sm font-black text-white shadow-2xl">
+        {error.message}
+      </p>
+    </div>
+  )
+}
+
 function App() {
   return (
     <GameProvider>
       <Router />
+      <ErrorToast />
     </GameProvider>
   )
 }

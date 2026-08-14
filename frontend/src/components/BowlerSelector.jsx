@@ -1,6 +1,5 @@
-export default function BowlerSelector({ bowler, team, onSwitch, disabled, disabledReason }) {
-  if (!bowler || !team) return null
-  const canSwitch = team.players.length > 1
+export default function BowlerSelector({ bowler, teamName, onSwitch, disabled, disabledReason }) {
+  if (!bowler) return null
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white/5 p-3 ring-1 ring-white/10">
@@ -12,12 +11,13 @@ export default function BowlerSelector({ bowler, team, onSwitch, disabled, disab
           Bowler
         </span>
         <p className="truncate text-sm font-black text-slate-50">{bowler.name}</p>
+        {teamName && <p className="text-xs font-semibold text-slate-400">{teamName}</p>}
       </div>
       <button
         type="button"
         onClick={onSwitch}
-        disabled={disabled || !canSwitch}
-        title={disabledReason || (canSwitch ? 'Switch bowler' : 'Need more players to switch')}
+        disabled={disabled}
+        title={disabledReason}
         className="rounded-xl bg-sky-500/15 px-3 py-2 text-xs font-black uppercase tracking-wide text-sky-300 transition hover:bg-sky-500/25 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
       >
         Switch bowler

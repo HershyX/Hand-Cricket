@@ -1,4 +1,4 @@
-export default function PlayerStatus({ label, player, teamName, accent = 'emerald', right }) {
+export default function PlayerStatus({ label, player, teamName, accent = 'emerald', isMe = false, right }) {
   const accents = {
     emerald: 'from-emerald-400/20 text-emerald-300',
     sky: 'from-sky-400/20 text-sky-300',
@@ -21,15 +21,10 @@ export default function PlayerStatus({ label, player, teamName, accent = 'emeral
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
             {label}
           </span>
-          {player.role === 'captain' && (
-            <span className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-black uppercase text-amber-300">
-              C
-            </span>
-          )}
         </div>
         <p className="truncate text-base font-black text-slate-50">
           {player.name}
-          {player.id === 'me' && <span className="ml-1.5 text-xs font-bold text-emerald-300">(you)</span>}
+          {isMe && <span className="ml-1.5 text-xs font-bold text-emerald-300">(you)</span>}
         </p>
         {teamName && <p className="text-xs font-semibold text-slate-400">{teamName}</p>}
       </div>

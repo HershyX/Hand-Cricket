@@ -4,27 +4,28 @@ import ScreenShell from '../components/ScreenShell'
 import { useGame, SCREENS } from '../state/GameContext'
 
 export default function CreateRoom() {
-  const { navigate, createRoom } = useGame()
+  const { navigate, createRoom, busy } = useGame()
   const [name, setName] = useState('')
-  const [overs, setOvers] = useState(2)
+  const [error, setError] = useState(null)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    const result = await createRoom({ name })
+    if (!result.ok) setError(result.error)
+  }
 
   return (
     <ScreenShell
       title="Create a room"
-      subtitle="Set up your match and invite a friend."
+      subtitle="Set up your match and share the room code."
       actions={
         <Button size="sm" variant="ghost" onClick={() => navigate(SCREENS.landing)}>
           Back
         </Button>
       }
     >
-      <form
-        className="flex flex-1 flex-col gap-6"
-        onSubmit={(e) => {
-          e.preventDefault()
-          createRoom({ name, overs })
-        }}
-      >
+      <form className="flex flex-1 flex-col gap-6" onSubmit={submit}>
         <label className="block">
           <span className="mb-1.5 block text-xs font-black uppercase tracking-wide text-slate-400">
             Your name
@@ -39,34 +40,15 @@ export default function CreateRoom() {
           />
         </label>
 
-        <div>
-          <span className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-400">
-            Overs per side
-          </span>
-          <div className="grid grid-cols-5 gap-2.5">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => setOvers(n)}
-                className={`rounded-2xl py-3.5 text-lg font-black transition active:scale-95 ${
-                  overs === n
-                    ? 'bg-emerald-500 text-emerald-950 shadow-lg shadow-emerald-500/25'
-                    : 'bg-white/5 text-slate-300 ring-1 ring-white/10 hover:bg-white/10'
-                }`}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          <p className="mt-2 text-xs font-semibold text-slate-500">
-            {overs} over{overs > 1 ? 's' : ''} of 6 balls each per team.
+        {error && (
+          <p className="rounded-xl bg-rose-500/15 px-4 py-3 text-sm font-bold text-rose-300 ring-1 ring-rose-400/30">
+            {error}
           </p>
-        </div>
+        )}
 
         <div className="mt-auto pt-2">
-          <Button size="lg" full type="submit">
-            Create room
+          <Button size="lg" full type="submit" disabled={busy}>
+            {busy ? 'Creating…' : 'Create room'}
           </Button>
         </div>
       </form>

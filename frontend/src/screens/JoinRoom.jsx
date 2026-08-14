@@ -4,11 +4,20 @@ import ScreenShell from '../components/ScreenShell'
 import { useGame, SCREENS } from '../state/GameContext'
 
 export default function JoinRoom() {
-  const { navigate, joinRoom } = useGame()
+  const { navigate, joinRoom, busy } = useGame()
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
+  const [error, setError] = useState(null)
 
   const cleanCode = (value) => value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    if (cleanCode(code).length < 4) return
+    const result = await joinRoom({ code, name })
+    if (!result.ok) setError(result.error)
+  }
 
   return (
     <ScreenShell
@@ -20,14 +29,7 @@ export default function JoinRoom() {
         </Button>
       }
     >
-      <form
-        className="flex flex-1 flex-col gap-6"
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (cleanCode(code).length < 4) return
-          joinRoom({ code, name })
-        }}
-      >
+      <form className="flex flex-1 flex-col gap-6" onSubmit={submit}>
         <label className="block">
           <span className="mb-1.5 block text-xs font-black uppercase tracking-wide text-slate-400">
             Room code
@@ -58,14 +60,20 @@ export default function JoinRoom() {
           />
         </label>
 
+        {error && (
+          <p className="rounded-xl bg-rose-500/15 px-4 py-3 text-sm font-bold text-rose-300 ring-1 ring-rose-400/30">
+            {error}
+          </p>
+        )}
+
         <div className="mt-auto pt-2">
           <Button
             size="lg"
             full
             type="submit"
-            disabled={cleanCode(code).length < 4}
+            disabled={busy || cleanCode(code).length < 4}
           >
-            Join room
+            {busy ? 'Joining…' : 'Join room'}
           </Button>
         </div>
       </form>

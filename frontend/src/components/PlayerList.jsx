@@ -1,9 +1,11 @@
-export default function PlayerList({ players, captainId, myId, onRemove }) {
+export default function PlayerList({ players, myId, hostId }) {
   return (
     <ul className="flex flex-col gap-2">
       {players.map((player) => {
-        const isCaptain = player.id === captainId
         const isMe = player.id === myId
+        const isHost = player.id === hostId
+        const ready = player.ready_status === 'READY'
+        const connected = player.connection_status === 'CONNECTED'
         return (
           <li
             key={player.id}
@@ -22,26 +24,28 @@ export default function PlayerList({ players, captainId, myId, onRemove }) {
                 {isMe && <span className="ml-1.5 text-xs font-black text-emerald-300">(you)</span>}
               </p>
               <div className="flex items-center gap-1.5">
-                {isCaptain && (
+                {isHost && (
                   <span className="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-amber-300">
-                    Captain
+                    Host
                   </span>
                 )}
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
-                  Ready
+                <span
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-rose-400'}`}
+                />
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  {connected ? 'Connected' : 'Disconnected'}
+                </span>
+                <span
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+                    ready
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : 'bg-white/10 text-slate-400'
+                  }`}
+                >
+                  {ready ? 'Ready' : 'Not ready'}
                 </span>
               </div>
             </div>
-            {onRemove && !isCaptain && (
-              <button
-                type="button"
-                onClick={() => onRemove(player.id)}
-                className="rounded-lg bg-white/5 px-2 py-1 text-xs font-bold text-slate-400 transition hover:bg-rose-500/20 hover:text-rose-300 active:scale-95"
-              >
-                Remove
-              </button>
-            )}
           </li>
         )
       })}

@@ -1,31 +1,17 @@
-import { useEffect, useRef } from 'react'
 import Button from '../components/Button'
+import CricketBall from '../components/CricketBall'
 import ScreenShell from '../components/ScreenShell'
-import TossAnimation from '../components/TossAnimation'
 import { useGame, SCREENS } from '../state/GameContext'
+import { teamLabel } from '../lib/gameView'
 
 export default function Toss() {
-  const { room, toss, chooseTossCall, flipCoin, makeDecision, navigate } = useGame()
-  const botDecidedRef = useRef(false)
-
-  useEffect(() => {
-    if (toss.winnerId === 'opp' && !botDecidedRef.current) {
-      botDecidedRef.current = true
-      const t = window.setTimeout(() => {
-        makeDecision(Math.random() < 0.5 ? 'bat' : 'bowl')
-      }, 1600)
-      return () => window.clearTimeout(t)
-    }
-    if (toss.winnerId !== 'opp') botDecidedRef.current = false
-    return undefined
-  }, [toss.winnerId, makeDecision])
-
-  const oppCaptain = room?.teams.B.players.find((p) => p.id === 'opp-captain')
+  const { tossWinnerId, me, navigate } = useGame()
+  const iWon = me && tossWinnerId === me.team_id
 
   return (
     <ScreenShell
-      title="Coin toss"
-      subtitle="Whoever wins decides who bats first."
+      title="Toss"
+      subtitle="The server decides who bats first."
       actions={
         <Button size="sm" variant="ghost" onClick={() => navigate(SCREENS.lobby)}>
           Back
@@ -33,54 +19,29 @@ export default function Toss() {
       }
     >
       <div className="flex flex-1 flex-col items-center justify-center gap-8">
-        <TossAnimation outcome={toss.outcome} call={toss.call} />
+        <CricketBall size={84} className="animate-toss-ball drop-shadow-[0_0_25px_rgba(220,38,38,0.35)]" />
 
-        {!toss.call && (
-          <div className="w-full">
-            <p className="mb-3 text-center text-sm font-bold text-slate-300">
-              {oppCaptain ? `${oppCaptain.name} flips the coin.` : 'Call the coin:'}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                size="lg"
-                variant="secondary"
-                onClick={() => chooseTossCall('heads')}
-                disabled={!!toss.outcome}
-              >
-                Heads
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                onClick={() => chooseTossCall('tails')}
-                disabled={!!toss.outcome}
-              >
-                Tails
-              </Button>
-            </div>
-          </div>
-        )}
+        <div className="animate-rise text-center">
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
+            Toss result
+          </p>
+          <h2 className="mt-3 text-4xl font-black tracking-tight text-slate-50">
+            {tossWinnerId ? teamLabel(tossWinnerId) : '…'}
+          </h2>
+          <p className="mt-2 text-base font-bold text-slate-300">
+            {iWon ? 'You won the toss!' : 'won the toss.'}
+          </p>
+        </div>
 
-        {toss.call && !toss.outcome && (
-          <Button size="lg" full variant="primary" onClick={flipCoin}>
-            Flip the coin
-          </Button>
-        )}
-
-        {toss.outcome && toss.winnerId === 'me' && (
-          <Button
-            size="lg"
-            full
-            variant="primary"
-            onClick={() => navigate(SCREENS.tossDecision)}
-          >
+        {iWon && (
+          <Button size="lg" full variant="primary" onClick={() => navigate(SCREENS.tossDecision)}>
             Choose bat or bowl →
           </Button>
         )}
 
-        {toss.outcome && toss.winnerId === 'opp' && (
+        {!iWon && tossWinnerId && (
           <p className="animate-rise text-center text-sm font-bold text-slate-400">
-            {oppCaptain?.name} is deciding…
+            Waiting for {teamLabel(tossWinnerId)} to decide…
           </p>
         )}
       </div>
