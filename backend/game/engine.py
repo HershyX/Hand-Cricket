@@ -16,6 +16,7 @@ import secrets
 from .models import (
     BallOutcome,
     BallRecord,
+    ConnectionStatus,
     GamePhase,
     GameResult,
     GameState,
@@ -278,6 +279,8 @@ class GameEngine:
         self._clear_moves()
         self.state.current_batter_id = batting_order[0].id
         self.state.current_bowler_id = bowling_order[0].id
+        self.state.turn_number = 1
+        self.state.ball_count = 0
         self.state.turn_state = TurnState.WAITING_FOR_MOVES
 
     # ------------------------------------------------------------------
@@ -335,6 +338,7 @@ class GameEngine:
         innings = self.state.current_innings
 
         innings.ball_count += 1
+        self.state.ball_count += 1
         ball = BallRecord(
             innings=innings.number,
             ball_number=innings.ball_count,
@@ -367,6 +371,8 @@ class GameEngine:
             self._finish_game(innings.batting_team_id, "TARGET_REACHED")
             return outcome
 
+        # A scoring ball that keeps the innings alive begins the next turn.
+        self.state.turn_number += 1
         self.state.turn_state = TurnState.WAITING_FOR_MOVES
         return outcome
 
@@ -398,16 +404,28 @@ class GameEngine:
 
         self.apply_bowler_switch()
         self._clear_moves()
+        self.state.turn_number += 1
         self.state.turn_state = TurnState.WAITING_FOR_MOVES
         return self.state.current_batter_id
 
     def apply_bowler_switch(self) -> str:
-        """Rotate to the next bowler on the bowling team (round-robin)."""
+        """Rotate to the next eligible bowler on the bowling team.
+
+        Connected bowlers are preferred: disconnected players are skipped.
+        If no other connected bowler exists, the rotation falls back to the
+        plain round-robin order so the game can always continue.
+        """
         innings = self.state.current_innings
         ordered = self._team_sorted_players(innings.bowling_team_id)
         current_index = next(
             i for i, p in enumerate(ordered) if p.id == self.state.current_bowler_id
         )
+        for offset in range(1, len(ordered) + 1):
+            candidate = ordered[(current_index + offset) % len(ordered)]
+            if candidate.connection_status == ConnectionStatus.CONNECTED:
+                self.state.current_bowler_id = candidate.id
+                self.state.bowler_switch_pending = False
+                return self.state.current_bowler_id
         self.state.current_bowler_id = ordered[(current_index + 1) % len(ordered)].id
         self.state.bowler_switch_pending = False
         return self.state.current_bowler_id

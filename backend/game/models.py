@@ -144,6 +144,11 @@ class GameState(BaseModel):
 
     bowler_switch_pending: bool = False
 
+    # 1-based number of the current turn (ball) within the active innings.
+    # A new turn is created after every completed ball that does not end the
+    # innings; the count resets to 1 when a new innings is set up.
+    turn_number: int = 0
+
     ball_count: int = 0
     ball_log: list[BallRecord] = Field(default_factory=list)
     last_ball: BallRecord | None = None

@@ -243,18 +243,25 @@ class TestInningsEvents:
         )
         batter_ws.send_json({"type": "submit_move", "move": 4})
         for ws in (batter_ws, bowler_ws):
-            drain(ws, 1)
+            msgs = drain(ws, 2)
+            assert msgs[0]["type"] == "move_submitted"
+            assert msgs[0]["role"] == "batter"
+            assert msgs[1]["type"] == "game_state"
         bowler_ws.send_json({"type": "submit_move", "move": 4})
         for ws in (host_ws, guest_ws):
-            msgs = drain(ws, 4)
+            msgs = drain(ws, 6)
             assert [m["type"] for m in msgs] == [
+                "move_submitted",
                 "move_result",
+                "player_out",
                 "innings_complete",
                 "innings_break",
                 "game_state",
             ]
-            assert msgs[2]["target"] == 1
-            assert msgs[3]["game"]["phase"] == "INNINGS_BREAK"
+            assert msgs[2]["wickets"] == 1
+            assert msgs[3]["target"] == 1
+            assert msgs[4]["target"] == 1
+            assert msgs[5]["game"]["phase"] == "INNINGS_BREAK"
         close_ws(host_ws, guest_ws)
 
 
@@ -297,7 +304,7 @@ class TestBowlerSwitch:
         bowler_ws.send_json({"type": "switch_bowler"})
         for ws in (host_ws, guest_ws):
             msgs = drain(ws, 2)
-            assert msgs[0]["type"] == "bowler_switch"
+            assert msgs[0]["type"] == "bowler_changed"
             assert msgs[0]["new_bowler_id"]
             assert msgs[1]["type"] == "game_state"
         close_ws(host_ws, guest_ws)
@@ -322,7 +329,7 @@ class TestBowlerSwitch:
         )
         batter_ws.send_json({"type": "submit_move", "move": 4})
         for ws in (batter_ws, bowler_ws):
-            drain(ws, 1)
+            drain(ws, 2)
         bowler_ws.send_json({"type": "switch_bowler"})
         msg = bowler_ws.receive_json()
         assert msg["type"] == "error"
@@ -347,21 +354,28 @@ class TestGameOver:
 
         chaser_ws.send_json({"type": "submit_move", "move": target})
         for ws in (chaser_ws, bowler2_ws):
-            drain(ws, 1)
+            msgs = drain(ws, 2)
+            assert msgs[0]["type"] == "move_submitted"
+            assert msgs[0]["role"] == "batter"
+            assert msgs[1]["type"] == "game_state"
         bowler2_ws.send_json({"type": "submit_move", "move": 0})
         for ws in (host_ws, guest_ws):
-            msgs = drain(ws, 3)
+            msgs = drain(ws, 5)
             assert [m["type"] for m in msgs] == [
+                "move_submitted",
                 "move_result",
+                "score_updated",
                 "game_over",
                 "game_state",
             ]
-            assert msgs[1]["reason"] == "TARGET_REACHED"
-            assert msgs[1]["winner_team_id"] == (
+            assert msgs[1]["ball"]["runs"] == target
+            assert msgs[2]["score"] == target
+            assert msgs[3]["reason"] == "TARGET_REACHED"
+            assert msgs[3]["winner_team_id"] == (
                 "team-2" if winner == "team-1" else "team-1"
             )
-            assert msgs[1]["target"] == target
-            assert msgs[2]["game"]["phase"] == "GAME_OVER"
+            assert msgs[3]["target"] == target
+            assert msgs[4]["game"]["phase"] == "GAME_OVER"
         close_ws(host_ws, guest_ws)
 
     def test_all_out_gives_first_innings_team_the_win(self, client):
@@ -380,18 +394,23 @@ class TestGameOver:
 
         chaser_ws.send_json({"type": "submit_move", "move": 6})
         for ws in (chaser_ws, bowler2_ws):
-            drain(ws, 1)
+            msgs = drain(ws, 2)
+            assert msgs[0]["type"] == "move_submitted"
+            assert msgs[1]["type"] == "game_state"
         bowler2_ws.send_json({"type": "submit_move", "move": 6})
         for ws in (host_ws, guest_ws):
-            msgs = drain(ws, 3)
+            msgs = drain(ws, 5)
             assert [m["type"] for m in msgs] == [
+                "move_submitted",
                 "move_result",
+                "player_out",
                 "game_over",
                 "game_state",
             ]
-            assert msgs[1]["reason"] == "ALL_OUT"
-            assert msgs[1]["winner_team_id"] == winner
-            assert msgs[2]["game"]["phase"] == "GAME_OVER"
+            assert msgs[2]["wickets"] == 1
+            assert msgs[3]["reason"] == "ALL_OUT"
+            assert msgs[3]["winner_team_id"] == winner
+            assert msgs[4]["game"]["phase"] == "GAME_OVER"
         close_ws(host_ws, guest_ws)
 
     def test_game_over_blocks_further_moves(self, client):
@@ -410,10 +429,10 @@ class TestGameOver:
 
         chaser_ws.send_json({"type": "submit_move", "move": 6})
         for ws in (chaser_ws, bowler2_ws):
-            drain(ws, 1)
+            drain(ws, 2)
         bowler2_ws.send_json({"type": "submit_move", "move": 6})
         for ws in (host_ws, guest_ws):
-            drain(ws, 3)
+            drain(ws, 5)
         chaser_ws.send_json({"type": "submit_move", "move": 1})
         msg = chaser_ws.receive_json()
         assert msg["type"] == "error"

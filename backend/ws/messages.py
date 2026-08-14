@@ -96,6 +96,7 @@ def next_turn_message(room) -> dict:
     state = room.engine.state
     return {
         "type": "next_turn",
+        "turn_number": state.turn_number,
         "innings_number": state.innings_number,
         "current_batter_id": state.current_batter_id,
         "current_bowler_id": state.current_bowler_id,
